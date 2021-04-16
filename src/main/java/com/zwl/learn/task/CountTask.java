@@ -1,8 +1,10 @@
 package com.zwl.learn.task;
 
+import com.sun.management.OperatingSystemMXBean;
 import com.zwl.learn.dto.Mask;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -13,7 +15,7 @@ import java.util.concurrent.RecursiveTask;
 @Slf4j
 public class CountTask extends RecursiveTask<List> {
     // 设置最小子任务的阈值
-    private static final int taskLimit = 10;
+    private static final int taskLimit = 1000;
     private int start;
     private int end;
 
@@ -33,6 +35,7 @@ public class CountTask extends RecursiveTask<List> {
                 Mask mask = new Mask("esx" + i, "desc" + i);
                 finalResult.add(mask);
             }
+
         } else {
 //            log.info("需要拆分：当前start为{}，end为{}",start,end);
             // 子任务还不是足够小，需要进一步分割
@@ -55,17 +58,20 @@ public class CountTask extends RecursiveTask<List> {
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
+        OperatingSystemMXBean mem = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        System.out.println("Total RAM：" + mem.getTotalPhysicalMemorySize() / 1024 / 1024 + "MB");
+        System.out.println("Available　RAM：" + mem.getFreePhysicalMemorySize() / 1024 / 1024 + "MB");
         ForkJoinPool forkJoinPool = new ForkJoinPool();
         // 计算从1累加到100，应该获取5050
-        CountTask myTask = new CountTask(1, 100);
+        CountTask myTask = new CountTask(1, 50000);
         ForkJoinTask<List> result = forkJoinPool.submit(myTask);
         if (myTask.isCompletedAbnormally()) {
             log.warn("发生了异常，{}", myTask.getException());
         }
-        List<Mask> masks = result.get();
-        for (Mask mask : masks) {
-            System.out.println(mask);
-        }
+//        List<Mask> masks = result.get();
+//        for (Mask mask : masks) {
+//            System.out.println(mask);
+//        }
 
 //        Optional<List> optionalList = Optional.ofNullable(result.get());
 //        optionalList.ifPresent(it->{
